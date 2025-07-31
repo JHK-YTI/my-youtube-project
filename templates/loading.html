@@ -1,0 +1,289 @@
+{% extends 'layout.html' %}
+
+{% block title %}AI 분석 결과{% endblock %}
+
+{% block head %}
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border-left-color: #4f46e5;
+            animation: spin 1s ease infinite;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div id="loading-view" class="flex flex-col justify-center items-center h-screen {% if is_restored %}hidden{% endif %}">
+        <div class="spinner"></div>
+        <p id="status-message" class="mt-6 text-lg text-gray-700 font-semibold">분석을 시작합니다...</p>
+        <p id="error-message" class="mt-4 text-red-600 font-bold"></p>
+    </div>
+
+    <div id="dashboard-view" class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8 {% if not is_restored %}hidden opacity-0{% endif %} transition-opacity duration-500">
+        
+        <section class="mb-8 p-6 bg-white rounded-xl shadow-lg">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">🚀 다른 영상 분석하기</h3>
+            <form method="POST" action="/extract_script" class="flex">
+                <input type="text" name="youtube_link" class="w-full px-4 py-3 text-gray-700 bg-gray-100 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="새로운 유튜브 URL을 입력하여 바로 분석하세요" required>
+                <button type="submit" class="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-r-lg transition-colors">
+                    <i class="fas fa-search mr-2"></i>새로 분석
+                </button>
+            </form>
+        </section>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            <div class="flex flex-col space-y-8 h-full">
+                <div class="bg-white p-6 rounded-xl shadow-lg flex-shrink-0">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2 border-b pb-3 mb-4"><i class="fas fa-video text-indigo-500"></i>영상 정보</h3>
+                    <div class="w-full mb-4">
+                       <iframe class="w-full aspect-video rounded-lg" id="video-player-iframe" src="" allow="accelerometer; autoplay; clipboard-write; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="space-y-2 text-base">
+                        <p><strong><i class="fas fa-heading w-5 text-center mr-1 text-gray-500"></i>제목:</strong> <span id="video-title"></span></p>
+                        <p><strong><i class="fas fa-user-edit w-5 text-center mr-1 text-gray-500"></i>업로더:</strong> <span id="video-uploader"></span></p>
+                        <p><strong><i class="fas fa-eye w-5 text-center mr-1 text-gray-500"></i>조회수:</strong> <span id="video-views"></span></p>
+                        <p><strong><i class="fas fa-thumbs-up w-5 text-center mr-1 text-gray-500"></i>좋아요:</strong> <span id="video-likes"></span></p>
+                        <p><strong><i class="fas fa-comments w-5 text-center mr-1 text-gray-500"></i>댓글:</strong> <span id="video-comments"></span></p>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg flex flex-col flex-grow">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2 border-b pb-3 mb-4 flex-shrink-0"><i class="fas fa-file-alt text-indigo-500"></i>원본 대본</h3>
+                    <div class="relative flex-grow min-h-[400px]">
+                        <textarea id="original-script-textarea" class="absolute inset-0 w-full h-full bg-gray-50 border border-gray-200 rounded-lg p-4 resize-none text-base leading-relaxed"></textarea>
+                    </div>
+                    <div class="flex gap-4 mt-4 flex-shrink-0">
+                         <button type="button" id="copy-original-btn" class="w-full py-2 px-4 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition"><i class="fas fa-copy mr-2"></i>복사</button>
+                         <button type="button" id="download-original-btn" class="w-full py-2 px-4 bg-gray-600 text-white font-semibold rounded-lg hover:bg-gray-700 transition"><i class="fas fa-download mr-2"></i>다운로드</button>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-col space-y-8 h-full">
+                <div class="bg-white p-6 rounded-xl shadow-lg flex flex-col flex-grow">
+                     <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2 border-b pb-3 mb-4 flex-shrink-0"><i class="fas fa-robot text-indigo-500"></i>AI 자동 분석 리포트</h3>
+                     <div class="relative flex-grow min-h-[400px]">
+                        <div id="analysis-container" class="absolute inset-0 w-full h-full overflow-y-auto bg-gray-50 p-4 rounded-lg prose max-w-none">
+                            </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2 border-b pb-3 mb-4"><i class="fas fa-comment-dots text-indigo-500"></i>베스트 댓글 분석</h3>
+                    <div id="best-comments-container" class="space-y-3 max-h-48 overflow-y-auto pr-2"></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-lg">
+                     <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2 border-b pb-3 mb-4"><i class="fas fa-brain text-indigo-500"></i>V12 최종 엔진 각색</h3>
+                    <form id="v12-rewrite-form" method="POST" action="{{ url_for('v12_rewrite') }}">
+                        <input type="hidden" name="original_script" id="v12-original-script">
+                        <input type="hidden" name="title" id="v12-title">
+                        <input type="hidden" name="original_task_id" value="{{ task_id }}">
+                        
+                        <div class="mb-4">
+                            <label for="v12-category-select" class="block mb-2 text-sm font-medium text-gray-900">콘텐츠 타입 선택</label>
+                            <select id="v12-category-select" name="category" class="w-full px-3 py-2 text-gray-800 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="ssultoon">썰툰 각색 (사건 재창조)</option>
+                                <option value="community">커뮤니티 글 각색 (내용 유지)</option>
+                                <option value="top_n">Top N 리스트</option>
+                                <option value="knowledge">지식/정보 전달</option>
+                                <option value="review">리뷰 (제품/서비스)</option>
+                            </select>
+                        </div>
+                        <button type="submit" id="v12-rewrite-button" class="w-full text-white font-bold py-3 px-4 rounded-lg transition duration-300 bg-indigo-600 hover:bg-indigo-700">
+                            <i class="fas fa-rocket mr-2"></i>V12 엔진으로 각색하기
+                        </button>
+                    </form>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-lg border-2 border-teal-500">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2 border-b pb-3 mb-4"><i class="fas fa-shield-alt text-teal-500"></i>V13 안전 각색 엔진 (저작권 회피)</h3>
+                   <form id="v13-rewrite-form" method="POST" action="{{ url_for('v13_rewrite') }}">
+                       <input type="hidden" name="original_script" id="v13-original-script">
+                       <input type="hidden" name="title" id="v13-title">
+                       <input type="hidden" name="original_task_id" value="{{ task_id }}">
+                       
+                       <div class="mb-4">
+                           <label for="v13-category-select" class="block mb-2 text-sm font-medium text-gray-900">콘텐츠 타입 선택</label>
+                           <select id="v13-category-select" name="category" class="w-full px-3 py-2 text-gray-800 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500">
+                               <option value="ssultoon">썰툰 (완전 재창작)</option>
+                               <option value="community">커뮤니티 (완전 재창작)</option>
+                               <option value="knowledge">지식/정보 (완전 재창작)</option>
+                               <option value="top_n">Top N 리스트 (완전 재창작)</option>
+                               <option value="review">리뷰 (완전 재창작)</option>
+                           </select>
+                       </div>
+                       <button type="submit" id="v13-rewrite-button" class="w-full text-white font-bold py-3 px-4 rounded-lg transition duration-300 bg-teal-600 hover:bg-teal-700">
+                           <i class="fas fa-feather-alt mr-2"></i>V13 엔진으로 안전하게 각색하기
+                       </button>
+                   </form>
+                   </div>
+            </div>
+        </div>
+        
+        <div class="mt-12 text-center">
+            <button onclick="window.location.href='/'" class="py-3 px-8 bg-gray-800 hover:bg-black text-white font-bold rounded-lg transition">
+                <i class="fas fa-home mr-2"></i>처음으로 돌아가기
+            </button>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        const task_id = "{{ task_id | default('') }}";
+        const is_restored = {{ is_restored | default('false') | tojson }};
+        const result_view = "{{ result_view | default('analysis_result') }}";
+        const task_type = "{{ task_type | default('celery') }}";
+        let initialData = {};
+
+        {% if is_restored %}
+        initialData = {{ initial_data_json | safe }};
+        {% endif %}
+        
+        function populateDashboard(data) {
+            const dashboard = document.getElementById('dashboard-view');
+            if (dashboard.classList.contains('hidden')) {
+                document.getElementById('loading-view').classList.add('hidden');
+                dashboard.classList.remove('hidden');
+                setTimeout(() => { dashboard.style.opacity = 1; }, 50);
+            }
+
+            if (data.video_id && !data.video_id.startsWith('user_upload_')) {
+                document.getElementById('video-player-iframe').src = `https://www.youtube-nocookie.com/embed/${data.video_id}`;
+            } else {
+                document.getElementById('video-player-iframe').parentElement.innerHTML = '<div class="w-full aspect-video rounded-lg bg-gray-200 flex items-center justify-center"><p class="text-gray-500">사용자 업로드 대본입니다.</p></div>';
+            }
+            document.getElementById('video-title').textContent = data.title || '제목 없음';
+            document.getElementById('video-uploader').textContent = data.uploader || '업로더 정보 없음';
+            document.getElementById('video-views').textContent = data.view_count ? Number(data.view_count).toLocaleString() : '정보 없음';
+            document.getElementById('video-likes').textContent = data.like_count ? Number(data.like_count).toLocaleString() : '정보 없음';
+            document.getElementById('video-comments').textContent = data.comment_count ? Number(data.comment_count).toLocaleString() : '정보 없음';
+            
+            const originalScriptText = data.original_script || '';
+            document.getElementById('original-script-textarea').value = originalScriptText;
+            
+            // ▼▼▼▼▼ [핵심 개선] AI 리포트 가독성 향상 스크립트 ▼▼▼▼▼
+            const analysisContainer = document.getElementById('analysis-container');
+            let analysisHtml = data.analysis_summary || 'AI 분석 결과가 없습니다.';
+            analysisHtml = analysisHtml.replace(/###\s*(.*?)\n/g, '<h4 class="text-xl font-bold text-gray-800 mt-6 mb-3 border-b pb-2">$1</h4>')
+                                     .replace(/-\s*(.*?)\n/g, '<p class="ml-4">- $1</p>')
+                                     .replace(/\n\n/g, '<br>')
+            analysisContainer.innerHTML = analysisHtml;
+            // ▲▲▲▲▲ [핵심 개선] ▲▲▲▲▲
+            
+            if (data.top_comments) renderComments(data.top_comments);
+
+            const v12ScriptInput = document.getElementById('v12-original-script');
+            const v12TitleInput = document.getElementById('v12-title');
+            if (v12ScriptInput) v12ScriptInput.value = originalScriptText;
+            if (v12TitleInput) v12TitleInput.value = data.title || '제목 없음';
+            
+            const v13ScriptInput = document.getElementById('v13-original-script');
+            const v13TitleInput = document.getElementById('v13-title');
+            if (v13ScriptInput) v13ScriptInput.value = originalScriptText;
+            if (v13TitleInput) v13TitleInput.value = data.title || '제목 없음';
+        }
+
+        function renderComments(comments) {
+            const container = document.getElementById('best-comments-container');
+            container.innerHTML = '';
+            if (!comments || comments.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4">표시할 베스트 댓글이 없습니다.</p>';
+                return;
+            }
+            comments.forEach(comment => {
+                const commentDiv = document.createElement('div');
+                if (comment.error) {
+                    commentDiv.className = 'bg-yellow-50 p-3 rounded-lg text-yellow-700';
+                    commentDiv.textContent = `ⓘ ${comment.error}`;
+                } else {
+                    commentDiv.className = 'bg-gray-100 p-3 rounded-lg';
+                    commentDiv.innerHTML = `<p class="font-semibold text-gray-800 text-sm"><i class="fas fa-user-circle mr-1"></i> ${comment.author || '익명'}</p><p class="text-gray-700 mt-1">${comment.text}</p><p class="text-xs text-gray-500 text-right mt-1.5">👍 ${comment.like_count ? Number(comment.like_count).toLocaleString() : 0}</p>`;
+                }
+                container.appendChild(commentDiv);
+            });
+        }
+        
+        function checkTaskStatus(taskId) {
+            fetch(`/task_status/${taskId}?result_view=${result_view}&task_type=${task_type}`)
+                .then(response => response.json())
+                .then(data => {
+                    const statusMessageEl = document.getElementById('status-message');
+                    const errorMessageEl = document.getElementById('error-message');
+
+                    if (data.state === 'PENDING' || data.state === 'PROGRESS') {
+                        statusMessageEl.textContent = data.status || '작업을 준비 중입니다...';
+                        setTimeout(() => checkTaskStatus(taskId), 2000); 
+                    } else if (data.state === 'SUCCESS') {
+                        statusMessageEl.textContent = '분석 완료! 결과 페이지로 이동합니다.';
+                        window.location.href = data.result_url;
+                    } else if (data.state === 'FAILURE') {
+                        statusMessageEl.textContent = '오류 발생';
+                        errorMessageEl.textContent = data.status || '알 수 없는 오류가 발생했습니다.';
+                    }
+                })
+                .catch(err => {
+                    const statusMessageEl = document.getElementById('status-message');
+                    const errorMessageEl = document.getElementById('error-message');
+                    statusMessageEl.textContent = '연결 오류';
+                    errorMessageEl.textContent = '서버와의 연결이 끊어졌습니다. 페이지를 새로고침하고 다시 시도해주세요.';
+                    console.error('Polling error:', err);
+                });
+        }
+
+        if (is_restored) {
+            populateDashboard(initialData);
+        } else if (task_id) {
+            checkTaskStatus(task_id);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('copy-original-btn')?.addEventListener('click', () => navigator.clipboard.writeText(document.getElementById('original-script-textarea').value).then(() => alert('원본 대본이 복사되었습니다.')));
+            document.getElementById('download-original-btn')?.addEventListener('click', () => {
+                const text = document.getElementById('original-script-textarea').value;
+                const title = document.getElementById('video-title').textContent || 'original_script';
+                const blob = new Blob([text], { type: 'text/plain; charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${title}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+            
+            const v12Form = document.getElementById('v12-rewrite-form');
+            if(v12Form) {
+                v12Form.addEventListener('submit', function() {
+                    const button = document.getElementById('v12-rewrite-button');
+                    button.disabled = true;
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>V12 엔진 가동 중...';
+                    
+                    setTimeout(() => {
+                        button.disabled = false;
+                        button.innerHTML = '<i class="fas fa-rocket mr-2"></i>V12 엔진으로 각색하기';
+                    }, 5000); 
+                });
+            }
+
+            const v13Form = document.getElementById('v13-rewrite-form');
+            if(v13Form) {
+                v13Form.addEventListener('submit', function() {
+                    const button = document.getElementById('v13-rewrite-button');
+                    button.disabled = true;
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>V13 엔진 가동 중...';
+                    
+                    setTimeout(() => {
+                        button.disabled = false;
+                        button.innerHTML = '<i class="fas fa-feather-alt mr-2"></i>V13 엔진으로 안전하게 각색하기';
+                    }, 5000); 
+                });
+            }
+        });
+    </script>
+{% endblock %}

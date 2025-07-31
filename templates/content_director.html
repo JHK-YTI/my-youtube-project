@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 콘텐츠 디렉터 - 튜브인사이트</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .pillar-card {
+            border: 1px solid #e5e7eb;
+            transition: box-shadow 0.3s ease;
+        }
+        .pillar-card:hover {
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .topic-button:hover {
+            background-color: #f3f4f6;
+            transform: translateX(5px);
+        }
+        .suggestion-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .suggestion-button:hover {
+            background-color: #ecfdf5; /* green-50 */
+            color: #065f46; /* green-800 */
+            border-color: #10b981; /* green-500 */
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-8">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-gray-800">AI 콘텐츠 디렉터</h1>
+            <p class="text-lg text-gray-600 mt-3">채널의 핵심 주제를 입력하거나, AI의 트렌드 추천을 받아 콘텐츠 시리즈를 기획해보세요.</p>
+        </div>
+
+        <div class="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-lg mb-10">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">1. 채널 핵심 주제 정하기</h2>
+            <p class="text-center text-gray-500 mb-6">어떤 주제로 채널을 운영하고 싶으신가요?</p>
+            
+            <form id="main-topic-form" class="flex mb-4">
+                <input type="text" id="main-topic-input" name="main_topic" class="w-full px-4 py-3 text-gray-700 bg-gray-100 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="예: 60대 이상 부모님을 위한 스마트폰 활용법" required>
+                <button type="submit" class="bg-purple-600 hover:bg-purple-700 flex-shrink-0 text-white font-bold px-6 py-3 rounded-r-lg transition-colors">
+                    <i class="fas fa-sitemap mr-2"></i>콘텐츠 기둥 생성
+                </button>
+            </form>
+
+            <div class="text-center border-t pt-4">
+                 <button id="get-trends-btn" class="w-full sm:w-auto bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2 px-5 rounded-lg transition-transform transform hover:scale-105">
+                    <i class="fas fa-robot mr-2"></i>막막하신가요? AI에게 최신 트렌드 주제 추천받기
+                </button>
+            </div>
+            <div id="trend-suggestions-container" class="mt-4 flex flex-wrap justify-center gap-2">
+                </div>
+            </div>
+
+        <div id="loading-spinner" class="hidden text-center py-10">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+            <p id="loading-message" class="mt-4 text-gray-600 font-semibold">AI가 분석 중입니다...</p>
+        </div>
+
+        <div id="pillars-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            </div>
+
+         <div class="text-center mt-12">
+            <a href="/start" class="text-indigo-600 hover:text-indigo-800 font-semibold">
+                <i class="fas fa-arrow-left mr-2"></i>이전 메뉴로
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const mainTopicForm = document.getElementById('main-topic-form');
+        const mainTopicInput = document.getElementById('main-topic-input');
+        const pillarsContainer = document.getElementById('pillars-container');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const loadingMessage = document.getElementById('loading-message');
+        const getTrendsBtn = document.getElementById('get-trends-btn');
+        const trendSuggestionsContainer = document.getElementById('trend-suggestions-container');
+
+        // 메인 주제 입력 폼 제출 이벤트
+        mainTopicForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            pillarsContainer.innerHTML = '';
+            trendSuggestionsContainer.innerHTML = '';
+            loadingMessage.textContent = 'AI가 채널의 방향성을 설계하고 있습니다...';
+            loadingSpinner.classList.remove('hidden');
+            this.querySelector('button').disabled = true;
+
+            const formData = new FormData(this);
+
+            fetch('/create_pillars', { method: 'POST', body: formData })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        pillarsContainer.innerHTML = `<p class="col-span-full text-center text-red-500 font-bold">${data.error}</p>`;
+                    } else {
+                        renderPillars(data.pillars);
+                    }
+                })
+                .catch(error => {
+                    pillarsContainer.innerHTML = `<p class="col-span-full text-center text-red-500 font-bold">콘텐츠 기둥 생성 중 오류 발생: ${error}</p>`;
+                })
+                .finally(() => {
+                    loadingSpinner.classList.add('hidden');
+                    this.querySelector('button').disabled = false;
+                });
+        });
+        
+        function renderPillars(pillars) {
+            pillarsContainer.innerHTML = ''; // 기존 기둥 초기화
+            pillars.forEach(pillar => {
+                const pillarCard = document.createElement('div');
+                pillarCard.className = 'pillar-card bg-white p-5 rounded-xl flex flex-col';
+                
+                const pillarTitle = document.createElement('h3');
+                pillarTitle.className = 'text-lg font-bold text-purple-700 mb-4 border-b pb-2';
+                pillarTitle.textContent = pillar.category;
+                
+                const topicsList = document.createElement('div');
+                topicsList.className = 'topics-list flex-grow space-y-2';
+                
+                pillar.topics.forEach(topicText => {
+                    topicsList.appendChild(createTopicButton(topicText));
+                });
+                
+                const expandButton = document.createElement('button');
+                expandButton.className = 'expand-btn mt-4 w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-3 text-sm rounded-md transition';
+                expandButton.innerHTML = '<i class="fas fa-plus mr-2"></i>주제 더보기';
+                expandButton.dataset.pillar = pillar.category;
+
+                pillarCard.appendChild(pillarTitle);
+                pillarCard.appendChild(topicsList);
+                pillarCard.appendChild(expandButton);
+                pillarsContainer.appendChild(pillarCard);
+            });
+        }
+
+        function createTopicButton(topicText) {
+            const form = document.createElement('form');
+            form.action = '/generate_script_from_topic';
+            form.method = 'POST';
+            form.target = '_blank';
+
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'topic';
+            input.value = topicText;
+
+            const button = document.createElement('button');
+            button.type = 'submit';
+            button.className = 'topic-button w-full text-left p-2 rounded-md transition duration-200';
+            button.innerHTML = `<i class="fas fa-file-alt text-gray-400 mr-2"></i>${topicText}`;
+            
+            form.appendChild(input);
+            form.appendChild(button);
+            return form;
+        }
+
+        pillarsContainer.addEventListener('click', function(e) {
+            const expandButton = e.target.closest('.expand-btn');
+            if (expandButton) {
+                const pillarTopic = expandButton.dataset.pillar;
+                const topicsListDiv = expandButton.previousElementSibling;
+                
+                const existingTopics = Array.from(topicsListDiv.querySelectorAll('input[name="topic"]'))
+                                            .map(input => `- ${input.value}`)
+                                            .join('\n');
+                
+                expandButton.disabled = true;
+                expandButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>생성 중...';
+
+                const formData = new FormData();
+                formData.append('pillar_topic', pillarTopic);
+                formData.append('existing_topics', existingTopics);
+
+                fetch('/expand_pillar', { method: 'POST', body: formData })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            alert(data.error);
+                        } else {
+                            data.new_topics.forEach(topicText => {
+                                topicsListDiv.appendChild(createTopicButton(topicText));
+                            });
+                        }
+                    })
+                    .catch(error => alert(`주제 확장 중 오류: ${error}`))
+                    .finally(() => {
+                        expandButton.disabled = false;
+                        expandButton.innerHTML = '<i class="fas fa-plus mr-2"></i>주제 더보기';
+                    });
+            }
+        });
+
+        // ▼▼▼▼▼ [수정된 부분] ▼▼▼▼▼
+        // AI 트렌드 추천 버튼 클릭 이벤트
+        getTrendsBtn.addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>AI가 트렌드를 분석 중...';
+            
+            fetch('/get_trend_categories', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    trendSuggestionsContainer.innerHTML = ''; // 기존 추천 내용 초기화
+                    if (data.error) {
+                        alert(`오류: ${data.error}`);
+                    } else {
+                        data.categories.forEach(categoryText => {
+                            const suggestionButton = document.createElement('button');
+                            suggestionButton.className = 'suggestion-button bg-white text-gray-700 font-semibold py-1 px-3 border border-gray-300 rounded-full text-sm';
+                            suggestionButton.textContent = categoryText;
+                            trendSuggestionsContainer.appendChild(suggestionButton);
+                        });
+                    }
+                })
+                .catch(error => alert(`트렌드 추천 요청 오류: ${error}`))
+                .finally(() => {
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-robot mr-2"></i>막막하신가요? AI에게 최신 트렌드 주제 추천받기';
+                });
+        });
+
+        // AI가 추천해준 트렌드 주제 버튼 클릭 이벤트 (이벤트 위임)
+        trendSuggestionsContainer.addEventListener('click', function(e) {
+            if (e.target.classList.contains('suggestion-button')) {
+                const selectedTopic = e.target.textContent;
+                mainTopicInput.value = selectedTopic;
+                mainTopicForm.querySelector('button[type="submit"]').click();
+            }
+        });
+        // ▲▲▲▲▲ [수정된 부분] ▲▲▲▲▲
+    </script>
+</body>
+</html>

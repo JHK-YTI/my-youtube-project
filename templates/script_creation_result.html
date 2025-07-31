@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 생성 대본 - 튜브인사이트</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-8 max-w-4xl">
+        <div class="bg-white p-8 rounded-2xl shadow-lg">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">🤖 AI 대본 생성 결과</h1>
+            <p class="text-lg text-gray-600 mb-6">요청하신 주제: <span class="font-semibold text-purple-600">"{{ topic }}"</span></p>
+
+            {% if error %}
+            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
+                <p class="font-bold">오류 발생</p>
+                <p>{{ error }}</p>
+            </div>
+            {% else %}
+            <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <h2 class="text-xl font-bold text-gray-700 mb-4">✅ 생성된 대본</h2>
+                <pre id="generated-script" class="whitespace-pre-wrap text-base leading-relaxed font-sans">{{ generated_script }}</pre>
+            </div>
+            <div class="mt-6 flex items-center gap-4">
+                <button id="copy-btn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">
+                    <i class="fas fa-copy mr-2"></i>대본 복사
+                </button>
+                <button id="download-btn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition">
+                    <i class="fas fa-download mr-2"></i>.txt로 저장
+                </button>
+            </div>
+            {% endif %}
+        </div>
+         <div class="text-center mt-8">
+            <a href="/content_director" class="text-indigo-600 hover:text-indigo-800 font-semibold">
+                <i class="fas fa-arrow-left mr-2"></i>다른 주제 탐색하기
+            </a>
+        </div>
+    </div>
+    <script>
+        {% if not error %}
+        document.getElementById('copy-btn').addEventListener('click', function() {
+            const text = document.getElementById('generated-script').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('대본이 클립보드에 복사되었습니다.');
+            }, () => {
+                alert('대본 복사에 실패했습니다.');
+            });
+        });
+
+        document.getElementById('download-btn').addEventListener('click', function() {
+            const scriptText = document.getElementById('generated-script').innerText;
+            const topic = {{ topic | tojson }};
+             fetch('/export_txt', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ script: scriptText, title: topic })
+            }).then(res => res.blob()).then(blob => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `${topic}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+            });
+        });
+        {% endif %}
+    </script>
+</body>
+</html>

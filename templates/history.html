@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>분석 기록 - 튜브인사이트</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .history-item:hover {
+            background-color: #f9fafb; /* gray-50 */
+            transform: translateX(4px);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+    <div class="container mx-auto p-4 sm:p-8 max-w-4xl">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-gray-800">마이페이지</h1>
+            <p class="text-lg text-gray-600 mt-3">내가 분석했던 모든 콘텐츠 기록을 확인합니다.</p>
+        </div>
+
+        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-4"><i class="fas fa-history mr-3 text-indigo-500"></i>나의 분석 기록</h2>
+            
+            <div class="space-y-4">
+                {% if histories %}
+                    {% for item in histories %}
+                    <div class="history-item flex items-center justify-between p-4 border border-gray-200 rounded-lg transition-transform duration-200">
+                        <div class="flex-grow">
+                            <p class="font-bold text-lg text-gray-800">{{ item.video_title }}</p>
+                            <p class="text-sm text-gray-500 mt-1">
+                                <i class="far fa-clock mr-1"></i> 분석 일시: {{ item.created_at.strftime('%Y년 %m월 %d일 %H:%M') }}
+                            </p>
+                        </div>
+                        <div class="flex-shrink-0 ml-4">
+                            <a href="#" class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition">
+                                결과 다시보기
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-12 px-6 bg-gray-50 rounded-lg">
+                        <i class="fas fa-box-open fa-3x text-gray-400"></i>
+                        <p class="mt-4 text-gray-600 font-semibold">아직 분석한 기록이 없습니다.</p>
+                        <p class="text-gray-500 mt-1">콘텐츠 분석을 시작하고 내역을 확인해보세요.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="mt-12 text-center">
+            <a href="{{ url_for('start') }}" class="text-gray-600 hover:text-gray-800 font-semibold transition">
+                <i class="fas fa-arrow-left mr-2"></i>처음으로 돌아가기
+            </a>
+        </div>
+    </div>
+</body>
+</html>

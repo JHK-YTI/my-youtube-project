@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 맞춤 대본 생성 결과 - 튜브인사이트</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f3f4f6; }
+        .result-panel { background-color: white; border-radius: 0.75rem; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); padding: 1.5rem; }
+        pre { white-space: pre-wrap; word-wrap: break-word; font-size: 0.9rem; line-height: 1.75; }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">🤖 AI 맞춤 대본 생성 결과</h1>
+        
+        {% if error %}
+            <div class="result-panel bg-red-50 border border-red-200">
+                <h2 class="text-xl font-bold text-red-700 mb-3"><i class="fas fa-exclamation-triangle mr-2"></i>오류 발생</h2>
+                <pre class="text-red-800">{{ error }}</pre>
+            </div>
+        {% else %}
+            <div class="space-y-6">
+                <div class="result-panel bg-indigo-50 border border-indigo-200">
+                    <h2 class="text-xl font-bold text-gray-700 mb-3"><i class="fas fa-check-double mr-2 text-indigo-500"></i>요청하신 기획 조건</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-md text-gray-800">
+                        <p><strong>카테고리:</strong> {{ options.category }}</p>
+                        <p><strong>톤앤매너:</strong> {{ options.tone }}</p>
+                        <p><strong>영상 형식:</strong> {{ options.format }}</p>
+                        <p><strong>주요 타겟:</strong> {{ options.target_audience }}</p>
+                        <p class="col-span-full"><strong>핵심 주제:</strong> {{ options.topic }}</p>
+                    </div>
+                </div>
+
+                <div class="result-panel">
+                    <h2 class="text-xl font-bold text-gray-700 mb-3"><i class="fas fa-microphone-alt mr-2 text-green-500"></i>1. TTS용 클린 대본</h2>
+                    <pre id="tts-script" class="p-4 bg-gray-50 rounded-md max-h-60 overflow-y-auto">{{ tts_script }}</pre>
+                </div>
+
+                <div class="result-panel">
+                    <h2 class="text-xl font-bold text-gray-700 mb-3"><i class="fas fa-file-alt mr-2 text-blue-500"></i>2. 제작용 대본 (주석 포함)</h2>
+                    <pre id="production-script" class="p-4 bg-gray-50 rounded-md max-h-96 overflow-y-auto">{{ production_script }}</pre>
+                </div>
+
+                <div class="result-panel">
+                    <h2 class="text-xl font-bold text-gray-700 mb-3"><i class="fas fa-film mr-2 text-purple-500"></i>3. 장면별 콘티(이미지) 추천</h2>
+                    <pre class="p-4 bg-gray-50 rounded-md max-h-96 overflow-y-auto">{{ storyboard }}</pre>
+                </div>
+
+                <div class="result-panel">
+                    <h2 class="text-xl font-bold text-gray-700 mb-3"><i class="fas fa-lightbulb mr-2 text-yellow-500"></i>4. 후속 영상 주제 추천</h2>
+                    <pre class="p-4 bg-gray-50 rounded-md max-h-60 overflow-y-auto">{{ followup_topics }}</pre>
+                </div>
+            </div>
+        {% endif %}
+
+         <div class="text-center mt-8">
+            <a href="{{ url_for('content_planner') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition">
+                <i class="fas fa-arrow-left mr-2"></i>다른 조건으로 다시 생성하기
+            </a>
+        </div>
+    </div>
+</body>
+</html>

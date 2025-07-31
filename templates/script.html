@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>대본 분석 - AI 어시스턴트</title>
+    <style>
+        body { background-color: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; margin: 0; }
+        .dashboard-container { display: grid; grid-template-columns: 1fr 1fr; gap: 2em; padding: 2em; max-width: 1600px; margin: auto; }
+        .panel { background-color: #fff; border-radius: 12px; padding: 1.5em; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .left-panel, .right-panel { display: flex; flex-direction: column; gap: 1.5em; }
+        h3 { font-size: 18px; color: #333; margin-top: 0; padding-bottom: 0.5em; border-bottom: 1px solid #e9ecef; }
+        pre, textarea { background-color: #f8f9fa; padding: 1em; border-radius: 8px; white-space: pre-wrap; word-wrap: break-word; font-size: 14px; line-height: 1.7; border: 1px solid #dee2e6; }
+        textarea:disabled { color: #495057; }
+        .video-player { width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; border: none; }
+        button { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: background-color 0.2s; width: 100%; }
+        button:hover { background-color: #0056b3; }
+        .action-buttons { margin-top: 10px; display: flex; gap: 10px; }
+        .action-buttons button { width: auto; font-size: 13px; background-color: #6c757d; padding: 8px 15px; }
+        .action-buttons button:hover { background-color: #5a6268; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="left-panel">
+            <div class="panel">
+                <h3>🎞️ 영상 정보</h3>
+                <iframe class="video-player" src="https://www.youtube.com/embed/{{ video_id }}" allowfullscreen></iframe>
+                <p><strong>제목:</strong> {{ title }}</p>
+                <p><strong>업로더:</strong> {{ uploader }}</p>
+                <p><strong>조회수:</strong> {{ view_count }}</p>
+                <p><strong>좋아요:</strong> {{ like_count }}</p>
+                <p><strong>댓글:</strong> {{ comment_count }}</p>
+                <p><strong>업로드 날짜:</strong> {{ upload_date }}</p>
+            </div>
+            <div class="panel">
+                <h3>📝 원본 대본</h3>
+                <textarea id="original-script-textarea" rows="15" disabled>{{ original_script }}</textarea>
+                <div class="action-buttons">
+                    <button type="button" id="copy-original-btn">📋 복사</button>
+                    <button type="button" id="download-original-btn">📄 다운로드</button>
+                </div>
+            </div>
+        </div>
+        <div class="right-panel">
+            <div class="panel">
+                <h3>📊 AI 종합 분석</h3>
+                <pre>{{ analysis_summary }}</pre>
+            </div>
+            <div class="panel">
+                <h3>💡 다음 단계로</h3>
+                <form method="POST" action="/rewrite_multi_loading">
+                    <input type="hidden" name="original_script" value="{{ original_script }}">
+                    <input type="hidden" name="video_id" value="{{ video_id }}">
+                    <input type="hidden" name="title" value="{{ title }}">
+                    <input type="hidden" name="thumbnail_url" value="{{ thumbnail_url }}">
+                    <input type="hidden" name="uploader" value="{{ uploader }}">
+                    <input type="hidden" name="analysis_summary" value="{{ analysis_summary | e }}">
+                    <input type="hidden" name="view_count" value="{{ view_count }}">
+                    <input type="hidden" name="like_count" value="{{ like_count }}">
+                    <input type="hidden" name="comment_count" value="{{ comment_count }}">
+                    <input type="hidden" name="upload_date" value="{{ upload_date }}">
+                    <button type="submit">🎨 스타일별로 자동 각색하기</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.getElementById('copy-original-btn')?.addEventListener('click', function() {
+            const text = document.getElementById('original-script-textarea').value;
+            navigator.clipboard.writeText(text).then(() => alert('원본 대본이 복사되었습니다.'));
+        });
+        document.getElementById('download-original-btn')?.addEventListener('click', function() {
+            const text = document.getElementById('original-script-textarea').value;
+            const title = {{ title | tojson or '"original_script"' }};
+            fetch('/export_txt', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ script: text, title: title })
+            }).then(res => res.blob()).then(blob => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `${title}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                URL.revokeObjectURL(a.href);
+            });
+        });
+    </script>
+</body>
+</html>

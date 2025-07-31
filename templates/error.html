@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+
+{% block title %}오류 발생{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <div class="card shadow-sm">
+            <div class="card-body p-5">
+                <h1 class="card-title text-danger mb-4">🚫 처리 중 오류가 발생했습니다</h1>
+                <p class="card-text fs-5 bg-light p-4 rounded">{{ error_message }}</p>
+                <a href="javascript:history.back()" class="btn btn-primary mt-4">이전 페이지로 돌아가기</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

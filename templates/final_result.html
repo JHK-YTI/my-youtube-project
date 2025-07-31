@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 최종 수정 원고</title>
+    <style>
+        body { background-color: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; margin: 0; }
+        .dashboard-container { display: flex; flex-direction: column; gap: 1.5em; padding: 2em; max-width: 900px; margin: auto; }
+        .panel { position: relative; background-color: #fff; border-radius: 12px; padding: 1.5em; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h3 { font-size: 20px; color: #333; margin-top: 0; padding-bottom: 0.5em; border-bottom: 1px solid #e9ecef; margin-bottom: 1em; }
+        pre, textarea { background-color: #f8f9fa; padding: 1em; border-radius: 8px; white-space: pre-wrap; word-wrap: break-word; font-size: 14px; line-height: 1.7; border: 1px solid #dee2e6; }
+        textarea { width: 100%; box-sizing: border-box; height: 100px; }
+        .submit-feedback, .back-button { width: 100%; margin-top: 10px; padding: 12px; font-size: 16px; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.2s; }
+        .submit-feedback { background-color: #007bff; color: white; }
+        .back-button { background-color: #6c757d; color: white; }
+        .copy-btn {
+            position: absolute;
+            top: 1.2em;
+            right: 1.5em;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .copy-btn:hover {
+            opacity: 1;
+        }
+        
+        .actions-group {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 10px;
+            margin-top: 1em;
+            flex-wrap: wrap;
+        }
+        .actions-group form {
+            display: inline-block;
+            margin: 0;
+        }
+        .actions-group .action-btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            transition: background-color 0.2s;
+        }
+        .actions-group .btn-sseoltoon { background-color: #ff6b6b; }
+        .actions-group .btn-sseoltoon:hover { background-color: #e65a5a; }
+        .actions-group .btn-imagefx { background-color: #48dbfb; }
+        .actions-group .btn-imagefx:hover { background-color: #37c4e3; }
+        .actions-group .btn-download { background-color: #1dd1a1; }
+        .actions-group .btn-download:hover { background-color: #17a881; }
+        .actions-group .btn-metadata { background-color: #fd7e14; }
+        .actions-group .btn-metadata:hover { background-color: #e86a02; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        
+        <div class="panel">
+            <h3>📝 수정 전 원고</h3>
+            <button class="copy-btn" id="copy-before-btn">📋 복사</button>
+            <pre id="script-before-pre">{{ script_to_refine or '수정 전 원고 정보가 없습니다.' }}</pre>
+        </div>
+
+        <div class="panel">
+            <h3>✅ AI 최종 수정 원고 (피드백 반영)</h3>
+            <button class="copy-btn" id="copy-after-btn">📋 복사</button>
+            <pre id="script-after-pre">{{ final_script }}</pre>
+        </div>
+
+        <div class="panel">
+            <h3>🎬 새로운 원고로 콘텐츠 만들기</h3>
+            <div class="actions-group">
+                <button type="button" class="action-btn btn-metadata" id="generate-metadata-btn">💡 AI 제목/태그 추천</button>
+                <form action="/generate_sseoltoon_prompt" method="POST" target="_blank">
+                    <input type="hidden" name="script" value="{{ final_script }}">
+                    <button type="submit" class="action-btn btn-sseoltoon">🖼️ 웹툰/그림 AI 대사 만들기</button>
+                </form>
+                <form action="/generate_imagefx_prompt" method="POST" target="_blank">
+                    <input type="hidden" name="script" value="{{ final_script }}">
+                    <button type="submit" class="action-btn btn-imagefx">📸 실사 이미지 AI 대사 만들기</button>
+                </form>
+                <button type="button" class="action-btn btn-download" id="download-final-btn">📄 .txt 파일로 저장</button>
+            </div>
+        </div>
+        <div class="panel">
+            <h3>🤖 AI 주요 변경점 리포트</h3>
+            <pre>{{ change_summary or '변경점 분석에 실패했거나, 수정된 내용이 없습니다.' }}</pre>
+        </div>
+
+        <div class="panel">
+            <h3>🔁 추가 수정 요청 및 돌아가기</h3>
+            <form action="/rewrite_with_feedback" method="POST">
+                <input type="hidden" name="script_to_refine" value="{{ final_script }}">
+                <input type="hidden" name="original_script" value="{{ original_script or '' }}">
+                <input type="hidden" name="video_id" value="{{ video_id or '' }}">
+                <input type="hidden" name="title" value="{{ title or '' }}">
+                <input type="hidden" name="analysis_summary" value="{{ analysis_summary or '' }}">
+                <input type="hidden" name="view_count" value="{{ view_count or '' }}">
+                <input type="hidden" name="like_count" value="{{ like_count or '' }}">
+                <input type="hidden" name="comment_count" value="{{ comment_count or '' }}">
+                <input type="hidden" name="upload_date" value="{{ upload_date or '' }}">
+                <input type="hidden" name="thumbnail_url" value="{{ thumbnail_url or '' }}">
+                <input type="hidden" name="uploader" value="{{ uploader or '' }}">
+                <input type="hidden" name="top_comments_json" value="{{ top_comments_json or '[]' }}">
+                
+                <textarea name="user_feedback" placeholder="이 원고에 대한 추가 수정 의견을 입력하세요." rows="4"></textarea>
+                <button type="submit" class="submit-feedback">이 내용으로 추가 수정 요청</button>
+            </form>
+            
+            <form method="POST" action="/back_to_script" style="margin-top: 10px;">
+                <input type="hidden" name="original_script" value="{{ original_script or '' }}">
+                <input type="hidden" name="video_id" value="{{ video_id or '' }}">
+                <input type="hidden" name="title" value="{{ title or '' }}">
+                <input type="hidden" name="analysis_summary" value="{{ analysis_summary or '' }}">
+                <input type="hidden" name="view_count" value="{{ view_count or '' }}">
+                <input type="hidden" name="like_count" value="{{ like_count or '' }}">
+                <input type="hidden" name="comment_count" value="{{ comment_count or '' }}">
+                <input type="hidden" name="upload_date" value="{{ upload_date or '' }}">
+                <input type="hidden" name="thumbnail_url" value="{{ thumbnail_url or '' }}">
+                <input type="hidden" name="uploader" value="{{ uploader or '' }}">
+                 <input type="hidden" name="top_comments_json" value="{{ top_comments_json or '[]' }}">
+                 <button type="submit" class="back-button">⬅️ 처음 분석 화면으로</button>
+            </form>
+            </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const copyBeforeBtn = document.getElementById('copy-before-btn');
+            if (copyBeforeBtn) {
+                copyBeforeBtn.addEventListener('click', function() {
+                    const textToCopy = document.getElementById('script-before-pre').innerText;
+                    navigator.clipboard.writeText(textToCopy).then(function() {
+                        alert('\'수정 전 원고\'가 복사되었습니다.');
+                    }, function(err) {
+                        alert('원고 복사에 실패했습니다. 오류: ', err);
+                    });
+                });
+            }
+
+            const copyAfterBtn = document.getElementById('copy-after-btn');
+            if (copyAfterBtn) {
+                copyAfterBtn.addEventListener('click', function() {
+                    const textToCopy = document.getElementById('script-after-pre').innerText;
+                    navigator.clipboard.writeText(textToCopy).then(function() {
+                        alert('\'AI 최종 수정 원고\'가 복사되었습니다.');
+                    }, function(err) {
+                        alert('원고 복사에 실패했습니다. 오류: ', err);
+                    });
+                });
+            }
+
+            const downloadFinalBtn = document.getElementById('download-final-btn');
+            if (downloadFinalBtn) {
+                downloadFinalBtn.addEventListener('click', function() {
+                    const scriptText = document.getElementById('script-after-pre').innerText;
+                    const title = {{ (title or 'final_script') | tojson | safe }}; 
+                    
+                    fetch('/export_txt', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ script: scriptText, title: `${title}_최종본` })
+                    })
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = `${title}_최종본.txt`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(a.href);
+                    })
+                    .catch(error => {
+                        console.error('다운로드 중 오류 발생:', error);
+                        alert('원고 다운로드에 실패했습니다.');
+                    });
+                });
+            }
+            
+            const generateMetadataBtn = document.getElementById('generate-metadata-btn');
+            if (generateMetadataBtn) {
+                generateMetadataBtn.addEventListener('click', function() {
+                    const scriptContent = document.getElementById('script-after-pre').innerText;
+                    
+                    this.disabled = true;
+                    this.textContent = '생성 중...';
+
+                    const formData = new FormData();
+                    formData.append('script', scriptContent);
+
+                    fetch('/generate_metadata', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            alert('오류: ' + data.error);
+                        } else {
+                            const formattedResult = data.metadata.replace(/###/g, '\n\n✅');
+                            alert('✨ AI 제목/태그 추천 결과 ✨\n' + formattedResult);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('메타데이터 생성 오류:', error);
+                        alert('제목/태그 추천에 실패했습니다.');
+                    })
+                    .finally(() => {
+                        this.disabled = false;
+                        this.textContent = '💡 AI 제목/태그 추천';
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>AI 이미지 프롬프트 결과</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2em;
+      background: #f9f9f9;
+    }
+    .block {
+      background: white;
+      border: 1px solid #ccc;
+      padding: 1em;
+      margin-bottom: 1.5em;
+      border-radius: 8px;
+    }
+    .desc {
+      font-weight: bold;
+      margin-bottom: 0.5em;
+      white-space: pre-wrap;
+    }
+    .prompt {
+      background: #f3f3f3;
+      padding: 1em;
+      border-radius: 6px;
+      position: relative;
+      white-space: pre-wrap;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 0.9em;
+      padding: 0.3em 0.8em;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .copy-btn:hover {
+      background: #388e3c;
+    }
+    form {
+      text-align: center;
+      margin-top: 2em;
+    }
+    button {
+      font-size: 1em;
+      padding: 0.6em 1.2em;
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+  <script>
+    function copyText(id) {
+      const text = document.getElementById(id).innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('복사되었습니다.');
+      });
+    }
+  </script>
+</head>
+<body>
+  <h1>🖼️ AI 이미지 프롬프트 결과</h1>
+
+  {% set scenes = prompts.strip().split("\n\n") %}
+  {% for scene in scenes if scene.strip() %}
+    {% set lines = scene.strip().split("\n") %}
+    <div class="block">
+      <div class="desc">📌 {{ lines[0] }}</div>
+      <div class="prompt" id="prompt_{{ loop.index }}">
+        {{ lines[1:] | join("\n") }}
+        <button class="copy-btn" onclick="copyText('prompt_{{ loop.index }}')">복사</button>
+      </div>
+    </div>
+  {% endfor %}
+
+  <form method="POST" action="/back_to_script">
+    <input type="hidden" name="original_script" value="{{ request.form.get('script', '') }}">
+    <button type="submit">⬅️ 이전으로 돌아가기</button>
+  </form>
+</body>
+</html>

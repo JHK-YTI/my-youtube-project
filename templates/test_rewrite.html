@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>V12 엔진 직접 테스트</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f3f4f6; }
+    </style>
+</head>
+<body class="p-4 sm:p-6">
+    <div class="max-w-4xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
+        <h1 class="text-3xl font-bold text-gray-800 text-center mb-2">
+            <i class="fas fa-vial text-indigo-500"></i> V12 엔진 기능 분리 테스트
+        </h1>
+        <p class="text-center text-gray-600 mb-8">이 페이지가 정상 작동하면, 서버 기능에는 문제가 없는 것입니다.</p>
+
+        <form method="POST" action="{{ url_for('test_rewrite') }}">
+            <div class="mb-4">
+                <label for="original_script" class="block mb-2 text-lg font-bold text-gray-700">1. 각색할 원본 대본</label>
+                <textarea name="original_script" id="original_script" rows="8" class="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="여기에 테스트할 대본을 입력하세요...">{{ original_script or '' }}</textarea>
+            </div>
+            
+            <div class="mb-6">
+                <label for="category-select" class="block mb-2 text-lg font-bold text-gray-700">2. 콘텐츠 타입 선택</label>
+                <select id="category-select" name="category" class="w-full px-3 py-3 text-gray-800 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="ssultoon" {% if category == 'ssultoon' %}selected{% endif %}>썰툰 각색 (사건 재창조)</option>
+                    <option value="community" {% if category == 'community' %}selected{% endif %}>커뮤니티 글 각색 (내용 유지)</option>
+                    <option value="top_n" {% if category == 'top_n' %}selected{% endif %}>Top N 리스트</option>
+                    <option value="knowledge" {% if category == 'knowledge' %}selected{% endif %}>지식/정보 전달</option>
+                    <option value="review" {% if category == 'review' %}selected{% endif %}>리뷰 (제품/서비스)</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="w-full text-white font-bold py-3 px-4 rounded-lg transition duration-300 bg-indigo-600 hover:bg-indigo-700 text-xl">
+                <i class="fas fa-rocket mr-2"></i>V12 엔진으로 각색하기
+            </button>
+        </form>
+
+        {% if final_script %}
+        <div class="mt-10 pt-8 border-t-2 border-dashed">
+             <h2 class="text-2xl font-bold text-gray-800 mb-4"><i class="fas fa-check-double text-green-500"></i>각색 최종본</h2>
+             <div class="p-6 bg-gray-50 rounded-lg">
+                <pre class="whitespace-pre-wrap text-base leading-relaxed">{{ final_script }}</pre>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</body>
+</html>

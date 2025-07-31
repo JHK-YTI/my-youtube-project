@@ -1,0 +1,183 @@
+{% extends 'layout.html' %}
+
+{% block title %}경쟁 채널 비교 분석 결과{% endblock %}
+
+{% block head %}
+    <style>
+        th, td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0; /* slate-200 */
+        }
+        thead th {
+            background-color: #e2e8f0; /* slate-200 */
+            color: #1e293b; /* slate-800 */
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f8fafc; /* slate-50 */
+        }
+        tbody tr:hover {
+            background-color: #f0fdf4; /* green-50 */
+        }
+        .keyword-tag {
+            background-color: #dcfce7; /* green-100 */
+            color: #166534; /* green-800 */
+            border: 1px solid #bbf7d0; /* green-200 */
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            margin: 0.125rem;
+            display: inline-block;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="p-4 sm:p-8">
+    <div class="container mx-auto">
+        <div class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-gray-800">경쟁 채널 비교 분석 결과</h1>
+            <p class="text-gray-500 mt-2">입력된 채널들의 핵심 지표를 한눈에 비교합니다.</p>
+        </div>
+
+        <div class="overflow-x-auto bg-white rounded-xl shadow-lg">
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr>
+                        <th class="rounded-tl-xl w-1/5">항목</th>
+                        {% for channel in results %}
+                            <th class="text-center {% if loop.last %}rounded-tr-xl{% endif %}">
+                                {% if channel.error %}
+                                    분석 실패
+                                {% else %}
+                                    {{ channel.channel_title }}
+                                {% endif %}
+                            </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="font-bold text-gray-700">구독자 수</td>
+                        {% for channel in results %}
+                            <td class="text-center text-lg font-semibold">
+                                {% if channel.error %}
+                                    <span class="text-red-500">-</span>
+                                {% else %}
+                                    <i class="fas fa-users text-indigo-500 mr-2"></i>{{ channel.subscriber_count }}
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-gray-700">최근 3개월 조회수</td>
+                        {% for channel in results %}
+                            <td class="text-center text-lg font-semibold">
+                                {% if channel.error %}
+                                    <span class="text-red-500">-</span>
+                                {% else %}
+                                    <i class="fas fa-eye text-green-500 mr-2"></i>{{ channel.recent_3_month_views }}
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-gray-700">주간 업로드 빈도</td>
+                        {% for channel in results %}
+                            <td class="text-center text-lg font-semibold">
+                                {% if channel.error %}
+                                    <span class="text-red-500">-</span>
+                                {% else %}
+                                    <i class="fas fa-calendar-alt text-purple-500 mr-2"></i>{{ channel.uploads_per_week }}
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-gray-700">월 예상 수익</td>
+                        {% for channel in results %}
+                            <td class="text-center text-lg font-semibold">
+                                {% if channel.error or "실패" in channel.revenue_info.message %}
+                                    <span class="text-red-500">-</span>
+                                {% else %}
+                                    <i class="fas fa-won-sign text-blue-500 mr-2"></i>{{ channel.revenue_info.total_low }} ~
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-gray-700">긴 영상 (평균 조회수)</td>
+                         {% for channel in results %}
+                            <td class="text-center text-lg font-semibold">
+                                {% if channel.error %}
+                                    <span class="text-red-500">-</span>
+                                {% else %}
+                                    <i class="fas fa-video text-gray-500 mr-2"></i>{{ channel.avg_long_form_views }}
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-gray-700">짧은 영상 (평균 조회수)</td>
+                         {% for channel in results %}
+                            <td class="text-center text-lg font-semibold">
+                                {% if channel.error %}
+                                    <span class="text-red-500">-</span>
+                                {% else %}
+                                    <i class="fas fa-bolt text-yellow-500 mr-2"></i>{{ channel.avg_short_form_views }}
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <td class="font-bold text-gray-700 align-top">핵심 주제어</td>
+                        {% for channel in results %}
+                            <td class="text-center">
+                                {% if channel.error %}
+                                    <p class="text-red-500">{{ channel.error }}</p>
+                                {% elif channel.top_keywords %}
+                                    <div class="flex flex-wrap justify-center">
+                                        {% for keyword, count in channel.top_keywords[:7] %}
+                                            <span class="keyword-tag">#{{ keyword }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <span>-</span>
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                    <tr class="bg-gray-50">
+                        <td class="font-bold text-gray-700 align-top">최고 인기 영상 (3개월)</td>
+                         {% for channel in results %}
+                            <td class="text-center text-sm">
+                                {% if channel.error or not channel.top_video %}
+                                    <span class="text-red-500">-</span>
+                                {% else %}
+                                    <a href="https://www.youtube.com/watch?v={{ channel.top_video.id }}" target="_blank" class="text-blue-600 hover:underline">
+                                        <i class="fas fa-fire-alt text-red-500 mr-1"></i>
+                                        {{ channel.top_video.title }}
+                                    </a>
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                    </tbody>
+            </table>
+            </div>
+
+        <div class="mt-8 flex justify-center space-x-4">
+            <button onclick="window.location.href='/compare_form'" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">
+                <i class="fas fa-redo-alt mr-2"></i>새로운 비교 분석하기
+            </button>
+            <button onclick="window.location.href='/'" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg transition duration-300">
+                <i class="fas fa-home mr-2"></i>홈으로 돌아가기
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

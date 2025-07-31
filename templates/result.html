@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>각색 결과</title>
+    <style>
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <h2>🎬 각색된 쇼츠 대본</h2>
+    <pre id="script-text">{{ rewritten_script }}</pre>
+
+    <button onclick="downloadScript()">📥 메모장 저장</button>
+    <a href="/">🔁 처음으로</a>
+
+    <script>
+        function downloadScript() {
+            const text = document.getElementById('script-text').innerText;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'rewritten_script.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

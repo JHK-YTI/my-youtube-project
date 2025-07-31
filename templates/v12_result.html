@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>V12 최종 각색 결과</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f3f4f6; }
+        .panel { 
+            background-color: white; 
+            border-radius: 0.75rem; 
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); 
+            display: flex;
+            flex-direction: column;
+            height: 70vh; 
+        }
+        .panel-title { 
+            font-size: 1.25rem; 
+            font-weight: 700; 
+            color: #1f2937; 
+            border-bottom: 1px solid #e5e7eb; 
+            padding-bottom: 1rem; 
+            margin-bottom: 1rem; 
+            display: flex; 
+            align-items: center; 
+            flex-shrink: 0;
+        }
+        .panel-title i { color: #4f46e5; margin-right: 0.75rem; }
+        .scrollable-content { 
+            overflow-y: auto;
+            flex-grow: 1;
+            min-height: 0;
+        }
+        pre { 
+            white-space: pre-wrap; 
+            word-wrap: break-word; 
+            font-size: 1rem; 
+            line-height: 1.75; 
+            background-color: #f9fafb; 
+            padding: 1.5rem; 
+            border-radius: 0.5rem; 
+            height: 100%;
+        }
+        .tool-button {
+            display: flex;
+            flex-direction: row; 
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .tool-button:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .error-box {
+            background-color: #fee2e2;
+            border-left: 5px solid #ef4444;
+            color: #b91c1c;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6">
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-4xl font-bold text-gray-800 text-center mb-8">
+            <i class="fas fa-brain text-indigo-500"></i> V12 최종 각색 결과
+        </h1>
+        
+        {% if error %}
+            <div class="panel p-6" style="height: auto;">
+                <h3 class="panel-title"><i class="fas fa-exclamation-triangle"></i>오류 발생</h3>
+                <div class="error-box">
+                    <p class="font-bold text-lg mb-2">각색 중 문제가 발생했습니다.</p>
+                    <p>{{ error }}</p>
+                </div>
+                <div class="mt-6">
+                    <h4 class="font-bold text-gray-700 mb-2">전달된 원본 대본:</h4>
+                    <pre class="text-sm bg-gray-100 p-3 rounded">{{ original_script }}</pre>
+                </div>
+            </div>
+        {% else %}
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+                
+                <div class="panel p-6">
+                    <h3 class="panel-title"><i class="fas fa-file-alt"></i>1. 원본 대본</h3>
+                    <div class="scrollable-content">
+                        <pre>{{ original_script or '원본 대본 정보가 없습니다.' }}</pre>
+                    </div>
+                </div>
+
+                <div class="panel p-6">
+                    <h3 class="panel-title"><i class="fas fa-check-double"></i>2. V12 각색 최종본</h3>
+                    <div class="scrollable-content">
+                        <pre id="final-script">{{ final_script or '최종 대본 생성에 실패했습니다.' }}</pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 bg-white p-8 rounded-2xl shadow-lg">
+                <h3 class="text-2xl font-bold text-gray-800 text-center mb-6"><i class="fas fa-magic-wand-sparkles mr-3 text-indigo-500"></i>작업 도구</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-center">
+                    
+                    <button id="copy-btn" class="tool-button bg-gray-600">
+                        <i class="fas fa-copy fa-lg mr-2"></i><span>대본 복사</span>
+                    </button>
+
+                    <button id="download-btn" class="tool-button bg-green-600">
+                        <i class="fas fa-download fa-lg mr-2"></i><span>.txt 저장</span>
+                    </button>
+                    
+                    <form id="tts-form" action="{{ url_for('generate_tts') }}" method="POST" target="_blank" class="contents">
+                        <input type="hidden" name="script" id="tts-script">
+                        <button type="submit" class="tool-button bg-blue-600">
+                            <i class="fas fa-microphone-alt fa-lg mr-2"></i><span>AI 음성 생성</span>
+                        </button>
+                    </form>
+
+                    <form id="sseoltoon-form" action="{{ url_for('generate_sseoltoon_prompt') }}" method="POST" target="_blank" class="contents">
+                        <input type="hidden" name="script" id="sseoltoon-script">
+                        <input type="hidden" name="original_script" value="{{ original_script }}">
+                        <input type="hidden" name="title" value="{{ title }}">
+                        <button type="submit" class="tool-button bg-purple-600">
+                            <i class="fas fa-palette fa-lg mr-2"></i><span>웹툰 프롬프트</span>
+                        </button>
+                    </form>
+                    
+                    <form id="imagefx-form" action="{{ url_for('generate_imagefx_prompt') }}" method="POST" target="_blank" class="contents">
+                        <input type="hidden" name="script" id="imagefx-script">
+                        <input type="hidden" name="original_script" value="{{ original_script }}">
+                        <input type="hidden" name="title" value="{{ title }}">
+                        <button type="submit" class="tool-button bg-teal-600">
+                            <i class="fas fa-camera-retro fa-lg mr-2"></i><span>실사 프롬프트</span>
+                        </button>
+                    </form>
+                    </div>
+            </div>
+
+        {% endif %}
+    </div>
+    
+    <div class="max-w-7xl mx-auto mt-12 mb-6 text-center">
+         {% if original_task_id %}
+            <a href="{{ url_for('analysis_result', task_id=original_task_id) }}" class="bg-gray-800 hover:bg-black text-white font-bold py-3 px-8 rounded-lg transition inline-block">
+                <i class="fas fa-arrow-left mr-2"></i>이전 분석화면으로 돌아가기
+            </a>
+        {% else %}
+            <a href="{{ url_for('start') }}" class="bg-gray-800 hover:bg-black text-white font-bold py-3 px-8 rounded-lg transition inline-block">
+                <i class="fas fa-home mr-2"></i>메인으로 돌아가기
+            </a>
+        {% endif %}
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const finalScriptEl = document.getElementById('final-script');
+            const scriptText = finalScriptEl ? (finalScriptEl.textContent || finalScriptEl.innerText).trim() : '';
+            
+            if (scriptText) {
+                // 숨겨진 form들에 최종 대본 텍스트를 채워넣습니다.
+                document.getElementById('tts-script').value = scriptText;
+                document.getElementById('sseoltoon-script').value = scriptText;
+                document.getElementById('imagefx-script').value = scriptText;
+            }
+
+            const title = "{{ title or 'V12_final_script' }}".replace(/[^a-z0-9가-힣\s-]/gi, '_');
+            const filename = `${title}_V12_최종각색본.txt`;
+
+            document.getElementById('copy-btn')?.addEventListener('click', () => {
+                if (!scriptText) return alert('복사할 대본이 없습니다.');
+                navigator.clipboard.writeText(scriptText).then(() => {
+                    alert('V12 최종 대본이 클립보드에 복사되었습니다.');
+                });
+            });
+
+            document.getElementById('download-btn')?.addEventListener('click', () => {
+                if (!scriptText) return alert('다운로드할 대본이 없습니다.');
+                const blob = new Blob([scriptText], { type: 'text/plain;charset=utf-8' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+            });
+        });
+    </script>
+</body>
+</html>

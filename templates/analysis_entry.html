@@ -1,0 +1,125 @@
+{% extends 'layout.html' %}
+
+{% block title %}콘텐츠 분석 - 튜브인사이트{% endblock %}
+
+{% block head %}
+<style>
+    .tab-button.active {
+        border-color: #4f46e5; /* indigo-600 */
+        background-color: #eef2ff; /* indigo-50 */
+        color: #312e81; /* indigo-900 */
+        font-weight: 600;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center min-h-screen p-4">
+    <div class="max-w-3xl mx-auto w-full">
+        
+        <div class="bg-white p-8 rounded-2xl shadow-lg">
+            <div class="text-center mb-8">
+                <i class="fas fa-search-dollar fa-3x text-indigo-500 mb-4"></i>
+                <h1 class="text-3xl font-bold text-gray-800">콘텐츠 분석</h1>
+                <p class="text-gray-600 mt-2">URL 또는 텍스트로 유튜브 콘텐츠를 분석합니다.</p>
+            </div>
+
+            <div class="mb-6 border-b border-gray-200">
+                <div class="flex -mb-px">
+                    <button class="tab-button flex-1 py-3 px-4 text-gray-500 hover:text-gray-700 border-b-2 font-medium" data-tab="url-analysis">
+                        <i class="fab fa-youtube mr-2"></i> 유튜브 URL
+                    </button>
+                    <button class="tab-button flex-1 py-3 px-4 text-gray-500 hover:text-gray-700 border-b-2 font-medium" data-tab="text-analysis">
+                        <i class="fas fa-file-alt mr-2"></i> 텍스트 직접 입력
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <div id="url-analysis" class="tab-content">
+                    <div class="bg-blue-50 border border-blue-200 text-blue-800 text-sm rounded-lg p-3 mb-6" role="alert">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <strong>안내:</strong> 영상 길이에 따라 분석에 1~3분 이상 소요될 수 있습니다. AI가 자막을 추출하고 분석하는 중이니 잠시만 기다려주세요.
+                    </div>
+                    <form method="POST" action="/extract_script" class="flex">
+                        <input type="text" name="youtube_link" class="w-full px-4 py-3 text-gray-700 bg-gray-100 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-300" placeholder="https://www.youtube.com/watch?v=..." required>
+                        <button type="submit" class="flex-shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-r-lg transition-colors">
+                            <i class="fas fa-search mr-2"></i> 분석 시작
+                        </button>
+                    </form>
+                </div>
+
+                <div id="text-analysis" class="tab-content">
+                    <form method="POST" action="/upload_script">
+                        <input type="text" id="text-filename" name="filename" class="w-full px-4 py-3 mb-4 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-300" placeholder="파일 제목 (예: 1화 대본)" required>
+                        
+                        <textarea id="text-content" name="script_content" class="w-full px-4 py-3 h-48 text-gray-700 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-300" placeholder="이곳에 대본을 직접 붙여넣거나, 아래 버튼으로 파일을 선택하여 불러오세요..." required></textarea>
+                        
+                        <div class="flex items-center gap-4 mt-4">
+                            <label for="file-upload" class="flex-grow w-full inline-block bg-gray-600 hover:bg-gray-700 text-white font-bold px-6 py-3 rounded-lg transition-colors text-center cursor-pointer">
+                                <i class="fas fa-upload mr-2"></i> .txt 파일 불러오기
+                            </label>
+                            <input type="file" id="file-upload" name="script_file" class="hidden" accept=".txt">
+                            <button type="submit" class="flex-grow w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-lg transition-colors">
+                                <i class="fas fa-file-invoice mr-2"></i> 분석 시작
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+         <div class="text-center mt-8">
+            <a href="{{ url_for('dashboard') }}" class="text-gray-500 hover:text-gray-700 font-semibold">
+                <i class="fas fa-arrow-left mr-2"></i>대시보드로 돌아가기
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        function activateTab(tabId) {
+            tabButtons.forEach(button => {
+                button.classList.toggle('active', button.dataset.tab === tabId);
+            });
+            tabContents.forEach(content => {
+                content.classList.toggle('active', content.id === tabId);
+            });
+        }
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                activateTab(button.dataset.tab);
+            });
+        });
+
+        activateTab('url-analysis');
+
+        const fileUpload = document.getElementById('file-upload');
+        const textContent = document.getElementById('text-content');
+        const textFilename = document.getElementById('text-filename');
+
+        if (fileUpload) {
+            fileUpload.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        textContent.value = e.target.result;
+                        let fileNameWithoutExt = file.name.split('.').slice(0, -1).join('.');
+                        textFilename.value = fileNameWithoutExt;
+                    };
+                    reader.readAsText(file, 'UTF-8');
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

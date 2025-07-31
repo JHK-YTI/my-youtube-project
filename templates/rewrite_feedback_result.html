@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>피드백 반영 각색 결과</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2em;
+      background: #f0f0f0;
+    }
+    h1 {
+      margin-bottom: 1em;
+    }
+    pre {
+      background: white;
+      padding: 1em;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      white-space: pre-wrap;
+    }
+    form {
+      text-align: center;
+      margin-top: 2em;
+    }
+    button {
+      padding: 0.6em 1.2em;
+      font-size: 1em;
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>📝 피드백 반영 각색 결과</h1>
+
+  <pre>{{ revised_script }}</pre>
+
+  <form method="POST" action="/back_to_script">
+    <input type="hidden" name="original_script" value="{{ revised_script }}">
+    <button type="submit">⬅️ 처음으로 돌아가기</button>
+  </form>
+</body>
+</html>

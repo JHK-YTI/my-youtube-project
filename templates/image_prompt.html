@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>ImageFX 이미지 프롬프트</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8f9fa; padding: 2em; }
+        .container { max-width: 800px; margin: auto; background-color: #fff; padding: 2em; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h1 { text-align: center; font-size: 24px; font-weight: bold; color: #333; margin-bottom: 1.5em; }
+        .prompt-block { margin-bottom: 1.5em; border: 1px solid #e9ecef; border-radius: 8px; padding: 1.5em; }
+        .scene-title { font-weight: bold; font-size: 1.1em; color: #495057; margin-bottom: 1em; }
+        .prompt-content { position: relative; }
+        .prompt-text { background-color: #f1f3f5; padding: 1em; border-radius: 6px; white-space: pre-wrap; word-wrap: break-word; font-family: 'SF Mono', monospace; font-size: 14px; line-height: 1.6; }
+        .copy-button { 
+            position: absolute; 
+            top: 10px; 
+            right: 10px; 
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            padding: 5px 10px; 
+            font-size: 12px; 
+            cursor: pointer; 
+            opacity: 1; /* 항상 보이도록 수정 */
+            transition: background-color 0.2s;
+        }
+        .copy-button:hover { background-color: #0056b3; }
+        .back-link { display: block; text-align: center; margin-top: 2em; color: #007bff; font-weight: bold; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📸 ImageFX용 이미지 프롬프트</h1>
+        {% if imagefx_prompts %}
+            {% for prompt_item in imagefx_prompts %}
+                <div class="prompt-block">
+                    <div class="scene-title">{{ prompt_item.title }}</div>
+                    <div class="prompt-content">
+                        <pre class="prompt-text" id="prompt-{{ loop.index }}">{{ prompt_item.prompt }}</pre>
+                        <button class="copy-button" onclick="copyPrompt('prompt-{{ loop.index }}')">복사</button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-center text-red-500">생성된 프롬프트가 없습니다. AI 응답을 확인해주세요.</p>
+        {% endif %}
+
+        <a href="javascript:history.back()" class="back-link">← 이전으로 돌아가기</a>
+    </div>
+
+    <script>
+        function copyPrompt(elementId) {
+            const textToCopy = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert('프롬프트가 클립보드에 복사되었습니다.');
+            }).catch(err => {
+                console.error('Copy failed: ', err);
+                alert('복사에 실패했습니다.');
+            });
+        }
+    </script>
+</body>
+</html>

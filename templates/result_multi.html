@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>AI 각색 결과</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; padding: 20px; }
+        h2, h3 { margin-top: 30px; }
+        pre { background: #f5f5f5; padding: 15px; border-radius: 8px; white-space: pre-wrap; }
+        button { margin-top: 10px; padding: 8px 15px; font-size: 14px; }
+        .section { margin-bottom: 40px; border-bottom: 1px solid #ccc; padding-bottom: 30px; }
+        form.inline { display: inline-block; margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <h2>📝 AI 스타일별 각색 결과</h2>
+
+    {% for style, script in results.items() %}
+    <div class="section">
+        <h3>{{ style }}</h3>
+        <pre>{{ script }}</pre>
+
+        <!-- txt 다운로드 -->
+        <form action="/download_txt" method="POST" class="inline">
+            <input type="hidden" name="script" value="{{ script }}">
+            <button type="submit">.txt 다운로드</button>
+        </form>
+
+        <!-- ImageFX 프롬프트 -->
+        <form action="/generate_imagefx" method="POST" class="inline">
+            <input type="hidden" name="script" value="{{ script }}">
+            <button type="submit">ImageFX 프롬프트</button>
+        </form>
+
+        <!-- 썰툰 프롬프트 -->
+        <form action="/generate_webtoon" method="POST" class="inline">
+            <input type="hidden" name="script" value="{{ script }}">
+            <button type="submit">썰툰 프롬프트</button>
+        </form>
+    </div>
+    {% endfor %}
+
+    <!-- 이전으로 돌아가기 버튼 -->
+    <form action="/back_to_script" method="POST">
+        <input type="hidden" name="original_script" value="{{ original_script|e }}">
+        <input type="hidden" name="video_id" value="{{ video_id }}">
+        <input type="hidden" name="title" value="{{ title }}">
+        <input type="hidden" name="thumbnail_url" value="{{ thumbnail_url }}">
+        <input type="hidden" name="uploader" value="{{ uploader }}">
+        <input type="hidden" name="reason_summary" value="{{ reason_summary|e }}">
+        <input type="hidden" name="strategy_summary" value="{{ strategy_summary|e }}">
+        <input type="hidden" name="pros_cons_summary" value="{{ pros_cons_summary|e }}">
+        <button type="submit">← 이전으로 돌아가기</button>
+    </form>
+</body>
+</html>

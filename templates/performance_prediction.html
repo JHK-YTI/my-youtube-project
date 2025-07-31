@@ -1,0 +1,152 @@
+{% extends 'layout.html' %}
+
+{% block title %}AI 성과 예측 - 튜브인사이트{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    @keyframes fadeInSlideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in-slide-up {
+        animation: fadeInSlideUp 0.6s ease-out forwards;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-4 sm:p-8 max-w-4xl">
+    <div class="bg-white p-8 rounded-2xl shadow-lg">
+        <div class="text-center mb-10">
+            <i class="fas fa-chart-line fa-3x text-indigo-500 mb-4"></i>
+            <h1 class="text-4xl font-bold text-gray-800">AI 가상 성과 예측</h1>
+            <p class="text-lg text-gray-600 mt-3">작성한 대본을 영상으로 만들기 전, AI에게 성공 가능성을 미리 물어보세요.</p>
+        </div>
+
+        <div>
+            <form action="/performance_predictor" method="POST">
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <label for="script-input" class="block text-xl font-bold text-gray-700">분석할 대본 입력</label>
+                        <label for="file-upload" class="cursor-pointer bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition text-sm">
+                            <i class="fas fa-upload mr-2"></i>.txt 파일 불러오기
+                        </label>
+                        <input type="file" id="file-upload" class="hidden" accept=".txt">
+                    </div>
+                    <textarea id="script-input" name="script" rows="12" class="w-full px-4 py-3 text-gray-700 bg-gray-100 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="이곳에 분석하고 싶은 대본을 붙여넣거나, 파일을 불러오세요..." required>{{ original_script or '' }}</textarea>
+                </div>
+                <div class="mt-6">
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xl py-4 px-8 rounded-lg transition-transform transform hover:scale-105">
+                        <i class="fas fa-rocket mr-2"></i> 성과 예측 분석 시작하기
+                    </button>
+                </div>
+            </form>
+            
+            {% if prediction_data or error %}
+            <div id="result-section" class="mt-10 border-t pt-8" style="opacity: 0;">
+                 <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">AI 분석 리포트</h2>
+                 
+                 {% if error %}
+                    <div class="bg-red-50 p-6 rounded-lg border border-red-200 text-red-700">
+                        <p class="font-bold">분석 중 오류 발생</p>
+                        <p>{{ error }}</p>
+                    </div>
+                 {% elif prediction_data and not prediction_data.error %}
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center mb-6">
+                            <div class="relative w-full max-w-[250px] mx-auto">
+                                <canvas id="scoreChart"></canvas>
+                            </div>
+                            <div class="text-center md:text-left">
+                                <p class="text-lg font-semibold text-gray-600">종합 잠재력 점수</p>
+                                <p class="text-6xl font-bold text-indigo-600">{{ prediction_data.score }}<span class="text-3xl font-medium text-gray-500">점</span></p>
+                                <p class="mt-2 text-gray-500 text-sm">{{ prediction_data.score_reason }}</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6 border-t pt-6">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-3">👍 강점 (Good Points)</h3>
+                                <div class="text-gray-700 space-y-2 prose max-w-none">{{ prediction_data.strengths_html|safe }}</div>
+                            </div>
+                             <div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-3">👎 보완점 (Areas for Improvement)</h3>
+                                <div class="text-gray-700 space-y-2 prose max-w-none">{{ prediction_data.weaknesses_html|safe }}</div>
+                            </div>
+                             <div>
+                                <h3 class="text-xl font-bold text-gray-800 mb-3">🚀 조회수 2배 올리는 꿀팁</h3>
+                                <div class="text-gray-700 space-y-2 prose max-w-none">{{ prediction_data.tip_html|safe }}</div>
+                            </div>
+                        </div>
+                    </div>
+                 {% endif %}
+            </div>
+            {% endif %}
+        </div>
+         <div class="text-center mt-8">
+            <a href="{{ url_for('dashboard') }}" class="text-gray-500 hover:text-gray-700 font-semibold">
+                <i class="fas fa-arrow-left mr-2"></i>대시보드로 돌아가기
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const fileUpload = document.getElementById('file-upload');
+    const scriptInput = document.getElementById('script-input');
+
+    if (fileUpload) {
+        fileUpload.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file && file.type === "text/plain") {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    scriptInput.value = e.target.result;
+                };
+                reader.readAsText(file, 'UTF-8');
+            } else {
+                alert('.txt 형식의 텍스트 파일만 업로드할 수 있습니다.');
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if prediction_data and not error %}
+        const resultSection = document.getElementById('result-section');
+        if (resultSection) {
+            resultSection.classList.add('animate-fade-in-slide-up');
+            resultSection.style.opacity = 1;
+
+            const score = {{ prediction_data.score|default(0) }};
+            const ctx = document.getElementById('scoreChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['잠재력 점수', '나머지'],
+                    datasets: [{
+                        data: [score, 100 - score],
+                        backgroundColor: ['#4f46e5', '#e5e7eb'], 
+                        borderColor: ['#4f46e5', '#e5e7eb'],
+                        borderWidth: 1,
+                        circumference: 180, 
+                        rotation: 270, 
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    cutout: '75%', 
+                    animation: { duration: 1500, easing: 'easeOutBounce' }
+                }
+            });
+        }
+        {% endif %}
+    });
+</script>
+{% endblock %}

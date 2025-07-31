@@ -1,0 +1,77 @@
+{% extends 'layout.html' %}
+
+{% block title %}전문가용 대시보드{% endblock %}
+
+{% block content %}
+<div class="container mx-auto max-w-7xl px-4 py-8">
+    
+    <div class="text-center mb-10">
+        <h1 class="text-4xl font-bold text-gray-800">👑 전문가용 대시보드</h1>
+        <p class="text-lg text-gray-600 mt-2">모든 전문가용 분석 도구를 여기에서 시작하세요.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        
+        <a href="{{ url_for('content_analysis') }}" class="group block p-8 bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div class="flex items-center mb-4">
+                <div class="bg-blue-100 text-blue-600 rounded-full p-3 mr-4">
+                    <i class="fas fa-search fa-lg"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900">콘텐츠 분석</h3>
+            </div>
+            <p class="text-gray-600">YouTube 영상 URL 또는 대본 텍스트를 입력하여 인기 요인과 문제점을 심층 분석합니다.</p>
+        </a>
+
+        <a href="{{ url_for('compare_form') }}" class="group block p-8 bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div class="flex items-center mb-4">
+                <div class="bg-green-100 text-green-600 rounded-full p-3 mr-4">
+                    <i class="fas fa-balance-scale fa-lg"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900">경쟁 채널 비교</h3>
+            </div>
+            <p class="text-gray-600">내 채널과 경쟁 채널의 성과 지표를 나란히 비교하여 강점과 약점을 파악합니다.</p>
+        </a>
+
+        <a href="{{ url_for('performance_predictor') }}" class="group block p-8 bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div class="flex items-center mb-4">
+                <div class="bg-purple-100 text-purple-600 rounded-full p-3 mr-4">
+                    <i class="fas fa-chart-line fa-lg"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900">AI 성과 예측</h3>
+            </div>
+            <p class="text-gray-600">대본을 입력하면 AI가 조회수 잠재력을 점수로 예측하고 개선점을 제안합니다.</p>
+        </a>
+
+        <a href="{{ url_for('single_channel_analysis') }}" class="group block p-8 bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div class="flex items-center mb-4">
+                <div class="bg-yellow-100 text-yellow-600 rounded-full p-3 mr-4">
+                    <i class="fas fa-tv fa-lg"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900">단일 채널 분석</h3>
+            </div>
+            <p class="text-gray-600">특정 채널 1개를 집중 분석하여 예상 수익, 콘텐츠 전략, 인기 공식을 도출합니다.</p>
+        </a>
+
+        <a href="{{ url_for('content_planner') }}" class="group block p-8 bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div class="flex items-center mb-4">
+                <div class="bg-red-100 text-red-600 rounded-full p-3 mr-4">
+                    <i class="fas fa-clipboard-list fa-lg"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900">콘텐츠 기획</h3>
+            </div>
+            <p class="text-gray-600">주제, 톤앤매너 등 몇 가지 조건만 입력하면 AI가 완전한 쇼츠 대본 패키지를 생성합니다.</p>
+        </a>
+        
+        <a href="{{ url_for('start') }}" class="group block p-8 bg-gray-200 rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div class="flex items-center mb-4">
+                <div class="bg-gray-300 text-gray-700 rounded-full p-3 mr-4">
+                    <i class="fas fa-arrow-left fa-lg"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900">뒤로 가기</h3>
+            </div>
+            <p class="text-gray-600">메인 선택 화면으로 돌아갑니다.</p>
+        </a>
+
+    </div>
+</div>
+{% endblock %}

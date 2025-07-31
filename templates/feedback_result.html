@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>피드백 반영 각색 결과</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            padding: 30px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        pre {
+            white-space: pre-wrap;
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        form, .button-wrap {
+            margin-top: 10px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            margin-right: 10px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        textarea {
+            width: 100%;
+            height: 80px;
+            margin-top: 10px;
+            font-size: 15px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>✅ 피드백 반영 각색 결과</h1>
+
+    <pre id="script">{{ revised_script }}</pre>
+
+    <div class="button-wrap">
+        <form method="POST" action="/generate_prompt_imagefx" target="_blank">
+            <input type="hidden" name="script" value="{{ revised_script }}">
+            <input type="hidden" name="prompt_type" value="imagefx">
+            <input type="hidden" name="duration" value="3">
+            <button type="submit">🎬 ImageFX용 프롬프트</button>
+        </form>
+
+        <form method="POST" action="/generate_prompt_sseoltoon" target="_blank">
+            <input type="hidden" name="script" value="{{ revised_script }}">
+            <input type="hidden" name="prompt_type" value="sseoltoon">
+            <button type="submit">🎨 썰툰형 프롬프트</button>
+        </form>
+    </div>
+
+    <form method="POST" action="/rewrite_feedback">
+        <input type="hidden" name="script" value="{{ revised_script }}">
+        <textarea name="feedback" placeholder="예: 마지막 문장을 감성적으로 마무리해주세요."></textarea>
+        <button type="submit">✏️ 추가 피드백 반영하여 재각색</button>
+    </form>
+
+    <div class="button-wrap">
+        <button onclick="downloadScript()">📄 메모장 저장</button>
+    </div>
+
+    <form method="POST" action="/rewrite_feedback">
+        <input type="hidden" name="script" value="{{ revised_script }}">
+        <input type="hidden" name="feedback" value="">
+        <button type="submit">⏪ 이 대본으로 다시 각색하기</button>
+    </form>
+
+    <form action="/">
+        <button type="submit">🏠 처음으로 돌아가기</button>
+    </form>
+
+    <script>
+        function downloadScript() {
+            const text = document.getElementById("script").innerText;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "shorts_script_feedback.txt";
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

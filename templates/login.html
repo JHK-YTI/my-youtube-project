@@ -1,0 +1,62 @@
+{% extends 'layout.html' %}
+
+{% block title %}로그인{% endblock %}
+
+{% block content %}
+<div class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg">
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-4">로그인</h2>
+        
+        {# Flash 메시지는 이제 layout.html에서 자동으로 처리됩니다. #}
+
+        <form method="POST" action="">
+            {{ form.hidden_tag() }}
+            <div class="mb-4">
+                <label for="email" class="block text-gray-700 text-sm font-bold mb-2">이메일</label>
+                {% if form.email.errors %}
+                    {{ form.email(class="w-full px-3 py-2 border border-red-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500", placeholder="you@example.com") }}
+                    <div class="text-red-500 text-xs mt-1">
+                        {% for error in form.email.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.email(class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500", placeholder="you@example.com") }}
+                {% endif %}
+            </div>
+            
+            <div class="mb-4">
+                <label for="password" class="block text-gray-700 text-sm font-bold mb-2">비밀번호</label>
+                {% if form.password.errors %}
+                    {{ form.password(class="w-full px-3 py-2 border border-red-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500", placeholder="••••••••") }}
+                    <div class="text-red-500 text-xs mt-1">
+                        {% for error in form.password.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.password(class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500", placeholder="••••••••") }}
+                {% endif %}
+            </div>
+
+            <div class="mb-6 flex items-center justify-between">
+                <div class="flex items-center">
+                    {{ form.remember(class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded") }}
+                    <label for="remember" class="ml-2 block text-sm text-gray-900">
+                        로그인 상태 유지
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+                {{ form.submit(class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg focus:outline-none focus:shadow-outline cursor-pointer") }}
+            </div>
+        </form>
+        <div class="border-t mt-6 pt-4 text-center">
+            <small class="text-gray-600">
+                아직 회원이 아니신가요? <a class="text-indigo-600 hover:text-indigo-800 font-bold" href="{{ url_for('signup') }}">회원가입</a>
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %}

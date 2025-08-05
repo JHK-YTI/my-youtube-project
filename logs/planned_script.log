@@ -4,3 +4,5 @@
 2025-07-31 17:01:43,013 - INFO - --- [TASK SUCCESS] 상세 기획 대본 생성 완료 ---
 2025-07-31 17:11:35,910 - INFO - --- [TASK START] 상세 기획 대본 생성 시작: {'category': 'ssultoon', 'tone': '유쾌하고 재미있게', 'format': '나레이션 중심', 'target_audience': '', 'topic': '부처님말씀'} ---
 2025-07-31 17:11:53,502 - INFO - --- [TASK SUCCESS] 상세 기획 대본 생성 완료 ---
+2025-08-03 14:17:17,339 - INFO - --- [TASK START] 상세 기획 대본 생성 시작: {'category': 'ssultoon', 'tone': '유쾌하고 재미있게', 'format': '나레이션 중심', 'target_audience': '', 'topic': '일진녀와 사귀게 된 썰'} ---
+2025-08-03 14:17:38,154 - INFO - --- [TASK SUCCESS] 상세 기획 대본 생성 완료 ---

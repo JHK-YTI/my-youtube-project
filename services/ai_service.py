@@ -277,9 +277,33 @@ def rewrite_script_v13_safe(original_script, category='ssultoon'):
         'original_script': original_script
     }
 
+# ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ [핵심 수정 부분] ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
 def analyze_transcript(transcript_text):
-    prompt = pt.ANALYSIS_PROMPT.format(transcript_text=transcript_text)
+    """
+    영상 대본의 인기 요인을 분석하고 개선점을 제안합니다.
+    AI가 항상 예측 가능한 구분 기호 '|||'를 포함한 답변을 생성하도록 수정합니다.
+    """
+    prompt = f"""
+당신은 최고의 유튜브 콘텐츠 분석 전문가입니다. 주어진 유튜브 대본을 분석하여 시청자들에게 인기를 끈 핵심 요인과 개선 아이디어를 제안해야 합니다.
+
+[분석 규칙]
+1.  **언어:** 반드시, 그리고 오직 한국어로만 답변해야 합니다.
+2.  **출력 형식:** 절대 HTML 태그, CSS 클래스, ### 등 다른 서식을 사용하지 마세요.
+3.  **내용:**
+    - **핵심 인기 요인 분석:** 대본의 인기 요인을 구체적인 근거를 들어 분석합니다.
+    - **콘텐츠 개선 아이디어:** 분석 내용을 바탕으로 구체적인 개선 아이디어 2~3가지를 제안합니다.
+4.  **최종 결과물 형식:**
+    - '핵심 인기 요인 분석' 내용을 먼저 서술합니다.
+    - 그 다음, **정확히 `|||` 세 개의 파이프 기호**를 사용하여 '콘텐츠 개선 아이디어' 내용과 분리합니다.
+    - 예시: [인기 요인 분석 내용]|||[개선 아이디어 내용]
+
+[분석할 대본]
+---
+{transcript_text}
+---
+"""
     return _safe_generate_openai(user_prompt=prompt, model_name=config.PREMIUM_MODEL, temperature=0.5)
+# ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
 def correct_transcript(transcript_text):
     prompt = pt.CORRECTION_PROMPT.format(transcript_text=transcript_text)

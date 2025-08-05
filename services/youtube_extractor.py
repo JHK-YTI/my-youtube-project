@@ -52,10 +52,13 @@ class YouTubeDataExtractor:
         video_info = {}
         transcript_text = ""
         audio_file_path = None
+        
+        # ▼▼▼▼▼ [핵심 수정] 쿠키 파일 경로 설정 ▼▼▼▼▼
+        cookie_file = 'cookies.txt'
 
         try:
-            # ▼▼▼▼▼ [핵심 수정] yt-dlp 요청 옵션에 '브라우저 위장' 헤더 추가 ▼▼▼▼▼
             ydl_opts_info = {
+                'cookiefile': cookie_file, # 쿠키 사용 옵션 추가
                 'cachedir': False,
                 'verbose': False,
                 'quiet': True,
@@ -67,7 +70,6 @@ class YouTubeDataExtractor:
                     'Accept-Language': 'en-US,en;q=0.5'
                 }
             }
-            # ▲▲▲▲▲ [핵심 수정] ▲▲▲▲▲
             
             print(f"\n--- [DEBUG] 영상 메타데이터 추출 시작: {clean_youtube_link} ---")
             with yt_dlp.YoutubeDL(ydl_opts_info) as ydl:
@@ -83,19 +85,17 @@ class YouTubeDataExtractor:
                     video_info['upload_date'] = f"{video_info['upload_date'][:4]}-{video_info['upload_date'][4:6]}-{video_info['upload_date'][6:]}"
             print(f"--- [DEBUG] 영상 메타데이터 추출 완료 ---")
 
-            print("--- [DEBUG] (속도 개선) 자막 파일 우선 추출 시도 ---")
+            # 자막 우선 추출 로직은 유지하되, 쿠키 옵션을 추가합니다.
             try:
                 ydl_opts_subtitle = {
+                    'cookiefile': cookie_file, # 쿠키 사용 옵션 추가
                     'writesubtitles': True, 'subtitleslangs': ['ko'],
                     'skip_download': True, 'cachedir': False,
                     'verbose': False, 'quiet': True, 'no_warnings': True,
                 }
                 with yt_dlp.YoutubeDL(ydl_opts_subtitle) as ydl_sub:
                     info_dict_sub = ydl_sub.extract_info(clean_youtube_link, download=False)
-                    
-                    subtitles = info_dict_sub.get('subtitles', {}).get('ko') or \
-                                info_dict_sub.get('automatic_captions', {}).get('ko')
-                                
+                    subtitles = info_dict_sub.get('subtitles', {}).get('ko') or info_dict_sub.get('automatic_captions', {}).get('ko')
                     if subtitles:
                         vtt_subtitle = next((s for s in subtitles if s['ext'] == 'vtt'), subtitles[-1])
                         subtitle_url = vtt_subtitle['url']
@@ -103,14 +103,11 @@ class YouTubeDataExtractor:
                         import urllib.request
                         with urllib.request.urlopen(subtitle_url) as response:
                             vtt_content = response.read().decode('utf-8')
-                            
                             lines = vtt_content.splitlines()
                             transcript_parts = []
-                            
                             for line in lines:
                                 if '-->' in line or line.strip().isdigit() or line.strip().lower().startswith(('webvtt', 'kind:', 'language:')) or not line.strip():
                                     continue
-                                
                                 clean_line = re.sub(r'<[^>]+>', '', line).strip()
                                 transcript_parts.append(clean_line)
                             
@@ -123,15 +120,15 @@ class YouTubeDataExtractor:
 
                             if final_text and len(final_text) > 10:
                                 transcript_text = final_text
-                                print("--- [DEBUG] 자막 추출 및 정제 성공 (안정화된 최종 파서) ---")
-
+                                print("--- [DEBUG] 자막 추출 및 정제 성공 ---")
             except Exception as e:
-                print(f"[ERROR] 자막 추출 중 오류 발생: {e}. Whisper로 넘어갑니다.")
+                print(f"[WARN] 자막 추출 중 오류 발생: {e}. Whisper로 넘어갑니다.")
 
             if not transcript_text:
-                print(f"--- [DEBUG] 자막 추출 실패. Whisper AI를 이용한 음성 추출 및 변환을 시작합니다. ---")
+                print(f"--- [DEBUG] Whisper AI를 이용한 음성 추출 및 변환을 시작합니다. ---")
                 
                 ydl_opts_audio = {
+                    'cookiefile': cookie_file, # 쿠키 사용 옵션 추가
                     'format': 'm4a/bestaudio/best',
                     'outtmpl': f"{video_info.get('id', 'temp_audio')}.%(ext)s",
                     'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
@@ -151,39 +148,8 @@ class YouTubeDataExtractor:
 
                 if self.whisper_model_loader:
                     model = self.whisper_model_loader()
-                    
-                    print(f"--- [DEBUG] 긴 오디오 파일 분할 처리 시작: {audio_file_path} ---")
-                    sound = AudioSegment.from_mp3(audio_file_path)
-                    
-                    MAX_DURATION_MS = 900 * 1000
-                    if len(sound) > MAX_DURATION_MS:
-                        sound = sound[:MAX_DURATION_MS]
-                        print(f"--- [INFO] 영상 길이가 15분을 초과하여, 앞부분 15분만 분석합니다. ---")
-
-                    chunk_length_ms = 5 * 60 * 1000
-                    chunks = [sound[i:i + chunk_length_ms] for i in range(0, len(sound), chunk_length_ms)]
-                    
-                    all_transcripts, temp_chunk_files = [], []
-                    for i, chunk in enumerate(chunks):
-                        chunk_filename = f"temp_chunk_{video_info.get('id', 'temp')}_{i}.mp3"
-                        temp_chunk_files.append(chunk_filename)
-                        print(f"--- [DEBUG] {i+1}/{len(chunks)}번째 오디오 조각 처리 중... ---")
-                        chunk.export(chunk_filename, format="mp3")
-                        
-                        result = model.transcribe(
-                            chunk_filename, language="ko",
-                            temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0),
-                            logprob_threshold=-0.8,
-                            no_speech_threshold=0.7
-                        )
-                        all_transcripts.append(result["text"])
-                    
-                    transcript_text = " ".join(all_transcripts)
-                    print(f"--- [DEBUG] 오디오 분할 처리 및 취합 완료 ---")
-
-                    for temp_file in temp_chunk_files:
-                        if os.path.exists(temp_file): os.remove(temp_file)
-                    print(f"--- [DEBUG] 임시 오디오 조각 파일 정리 완료 ---")
+                    result = model.transcribe(audio_file_path, language="ko")
+                    transcript_text = result["text"]
                 else:
                     transcript_text = "⚠️ Whisper 모델 로더가 없어 대본을 추출할 수 없습니다."
 

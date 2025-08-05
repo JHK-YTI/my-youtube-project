@@ -166,14 +166,25 @@
             const originalScriptText = data.original_script || '';
             document.getElementById('original-script-textarea').value = originalScriptText;
             
-            // ▼▼▼▼▼ [핵심 개선] AI 리포트 가독성 향상 스크립트 ▼▼▼▼▼
+            // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ [핵심 수정 부분] ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+            // 기존의 복잡하고 불안정한 '수리' 코드를 버리고,
+            // AI가 보내준 깨끗한 데이터를 간단하게 화면에 표시하는 안정적인 코드로 교체합니다.
             const analysisContainer = document.getElementById('analysis-container');
-            let analysisHtml = data.analysis_summary || 'AI 분석 결과가 없습니다.';
-            analysisHtml = analysisHtml.replace(/###\s*(.*?)\n/g, '<h4 class="text-xl font-bold text-gray-800 mt-6 mb-3 border-b pb-2">$1</h4>')
-                                     .replace(/-\s*(.*?)\n/g, '<p class="ml-4">- $1</p>')
-                                     .replace(/\n\n/g, '<br>')
-            analysisContainer.innerHTML = analysisHtml;
-            // ▲▲▲▲▲ [핵심 개선] ▲▲▲▲▲
+            const rawAnalysis = data.analysis_summary || '분석 결과 없음|||분석 결과 없음';
+            
+            // 1. AI가 약속한 구분 기호 '|||'를 기준으로 응답을 두 부분으로 나눕니다.
+            const parts = rawAnalysis.split('|||');
+            const strengths = parts[0] ? parts[0].trim() : '핵심 인기 요인 분석에 실패했습니다.';
+            const improvements = parts[1] ? parts[1].trim() : '개선 아이디어 분석에 실패했습니다.';
+
+            // 2. 각 부분을 정해진 HTML 형식으로 안전하게 만듭니다.
+            //    - replace(/\n/g, '<br>')를 통해 줄바꿈을 화면에 올바르게 표시합니다.
+            const strengthsHtml = `<h4 class="text-xl font-bold text-gray-800 mt-6 mb-3 border-b pb-2">📈 이 영상의 핵심 인기 요인</h4><p>${strengths.replace(/\n/g, '<br>')}</p>`;
+            const improvementsHtml = `<h4 class="text-xl font-bold text-gray-800 mt-6 mb-3 border-b pb-2">💡 2배의 조회수를 부르는 개선 아이디어</h4><p>${improvements.replace(/\n/g, '<br>')}</p>`;
+
+            // 3. 두 개의 안전한 HTML 조각을 합쳐서 화면에 표시합니다.
+            analysisContainer.innerHTML = strengthsHtml + improvementsHtml;
+            // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
             
             if (data.top_comments) renderComments(data.top_comments);
 
